@@ -6,6 +6,7 @@ import { TSegment, ZSegmentFilters } from "@formbricks/types/segment";
 import { TSurvey } from "@formbricks/types/surveys/types";
 import { updateSurveyInternal } from "@/lib/survey/service";
 import { validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { getOrganizationAIKeys, getOrganizationIdFromEnvironmentId } from "@/modules/survey/lib/organization";
@@ -161,6 +162,8 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
       }
     } else if (type === "app") {
       if (!currentSurvey.segment) {
+        const projectId = await getProjectIdFromEnvironmentId(environmentId);
+
         await prisma.survey.update({
           where: {
             id: surveyId,
@@ -181,6 +184,11 @@ export const updateSurvey = async (updatedSurvey: TSurvey): Promise<TSurvey> => 
                   environment: {
                     connect: {
                       id: environmentId,
+                    },
+                  },
+                  project: {
+                    connect: {
+                      id: projectId,
                     },
                   },
                 },

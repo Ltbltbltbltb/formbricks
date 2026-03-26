@@ -8,6 +8,7 @@ import {
   subscribeOrganizationMembersToSurveyResponses,
 } from "@/lib/organization/service";
 import { validateMediaAndPrepareBlocks } from "@/lib/survey/utils";
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "@/modules/survey/lib/action-class";
 import { selectSurvey } from "@/modules/survey/lib/survey";
@@ -44,7 +45,10 @@ export const createSurvey = async (
       };
     }
 
-    const organization = await getOrganizationByEnvironmentId(environmentId);
+    const [organization, projectId] = await Promise.all([
+      getOrganizationByEnvironmentId(environmentId),
+      getProjectIdFromEnvironmentId(environmentId),
+    ]);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
     }
@@ -75,6 +79,11 @@ export const createSurvey = async (
             id: environmentId,
           },
         },
+        project: {
+          connect: {
+            id: projectId,
+          },
+        },
       },
       select: selectSurvey,
     });
@@ -86,11 +95,8 @@ export const createSurvey = async (
           title: survey.id,
           filters: [],
           isPrivate: true,
-          environment: {
-            connect: {
-              id: environmentId,
-            },
-          },
+          environmentId,
+          projectId,
         },
       });
 

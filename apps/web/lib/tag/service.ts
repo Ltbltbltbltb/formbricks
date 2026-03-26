@@ -6,6 +6,7 @@ import { PrismaErrorType } from "@formbricks/database/types/error";
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
 import { TTag } from "@formbricks/types/tags";
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { TagError } from "@/modules/projects/settings/types/tag";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
@@ -52,11 +53,14 @@ export const createTag = async (
 ): Promise<Result<TTag, { code: TagError; message: string; meta?: Record<string, string> }>> => {
   validateInputs([environmentId, ZId], [name, ZString]);
 
+  const projectId = await getProjectIdFromEnvironmentId(environmentId);
+
   try {
     const tag = await prisma.tag.create({
       data: {
         name,
         environmentId,
+        projectId,
       },
     });
 

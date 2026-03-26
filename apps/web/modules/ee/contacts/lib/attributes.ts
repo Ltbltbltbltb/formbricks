@@ -4,6 +4,7 @@ import { ZId, ZString } from "@formbricks/types/common";
 import { TContactAttributesInput, ZContactAttributesInput } from "@formbricks/types/contact-attribute";
 import { TContactAttributeKey } from "@formbricks/types/contact-attribute-key";
 import { MAX_ATTRIBUTE_CLASSES_PER_ENVIRONMENT } from "@/lib/constants";
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { validateInputs } from "@/lib/utils/validate";
 import { prepareNewSDKAttributeForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
@@ -145,14 +146,20 @@ export const updateAttributes = async (
       ? null
       : String(contactAttributesParam.userId);
 
-  // Fetch current attributes, contact attribute keys, and email/userId checks in parallel
-  const [currentAttributes, contactAttributeKeys, existingEmailAttribute, existingUserIdAttribute] =
-    await Promise.all([
-      getContactAttributes(contactId),
-      getContactAttributeKeys(environmentId),
-      emailValue ? hasEmailAttribute(emailValue, environmentId, contactId) : Promise.resolve(null),
-      userIdValue ? hasUserIdAttribute(userIdValue, environmentId, contactId) : Promise.resolve(null),
-    ]);
+  // Fetch current attributes, contact attribute keys, environment, and email/userId checks in parallel
+  const [
+    currentAttributes,
+    contactAttributeKeys,
+    projectId,
+    existingEmailAttribute,
+    existingUserIdAttribute,
+  ] = await Promise.all([
+    getContactAttributes(contactId),
+    getContactAttributeKeys(environmentId),
+    getProjectIdFromEnvironmentId(environmentId),
+    emailValue ? hasEmailAttribute(emailValue, environmentId, contactId) : Promise.resolve(null),
+    userIdValue ? hasUserIdAttribute(userIdValue, environmentId, contactId) : Promise.resolve(null),
+  ]);
 
   // Process email and userId existence early
   const emailExists = !!existingEmailAttribute;
@@ -360,6 +367,7 @@ export const updateAttributes = async (
                 type: "custom",
                 dataType,
                 environment: { connect: { id: environmentId } },
+                project: { connect: { id: projectId } },
                 attributes: {
                   create: {
                     contactId,

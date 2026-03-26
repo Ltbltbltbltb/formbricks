@@ -7,6 +7,7 @@ import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError } from "@formbricks/types/errors";
 import { TIntegration, TIntegrationInput, ZIntegrationType } from "@formbricks/types/integration";
 import { ITEMS_PER_PAGE } from "../constants";
+import { getProjectIdFromEnvironmentId } from "../utils/helper";
 import { validateInputs } from "../utils/validate";
 
 const transformIntegration = (integration: TIntegration): TIntegration => {
@@ -28,6 +29,8 @@ export const createOrUpdateIntegration = async (
 ): Promise<TIntegration> => {
   validateInputs([environmentId, ZId]);
 
+  const projectId = await getProjectIdFromEnvironmentId(environmentId);
+
   try {
     const integration = await prisma.integration.upsert({
       where: {
@@ -38,11 +41,13 @@ export const createOrUpdateIntegration = async (
       },
       update: {
         ...integrationData,
-        environment: { connect: { id: environmentId } },
+        environmentId,
+        projectId,
       },
       create: {
         ...integrationData,
-        environment: { connect: { id: environmentId } },
+        environmentId,
+        projectId,
       },
     });
     return integration;

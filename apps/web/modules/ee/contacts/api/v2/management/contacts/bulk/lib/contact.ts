@@ -4,6 +4,7 @@ import { prisma } from "@formbricks/database";
 import { logger } from "@formbricks/logger";
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { getEnvironment } from "@/lib/environment/service";
 import { isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
@@ -406,6 +407,7 @@ const upsertAttributeKeysInBatches = async (
   tx: Prisma.TransactionClient,
   keysToUpsert: Map<string, { key: string; name: string; dataType: TContactAttributeDataType }>,
   environmentId: string,
+  projectId: string,
   attributeKeyMap: Record<string, string>
 ): Promise<void> => {
   const keysArray = Array.from(keysToUpsert.values());
@@ -414,17 +416,18 @@ const upsertAttributeKeysInBatches = async (
     const batch = keysArray.slice(i, i + BATCH_SIZE);
 
     const upsertedKeys = await tx.$queryRaw<{ id: string; key: string }[]>`
-      INSERT INTO "ContactAttributeKey" ("id", "key", "name", "environmentId", "dataType", "created_at", "updated_at")
-      SELECT 
+      INSERT INTO "ContactAttributeKey" ("id", "key", "name", "environmentId", "projectId", "dataType", "created_at", "updated_at")
+      SELECT
         unnest(${Prisma.sql`ARRAY[${batch.map(() => createId())}]`}),
         unnest(${Prisma.sql`ARRAY[${batch.map((k) => k.key)}]`}),
         unnest(${Prisma.sql`ARRAY[${batch.map((k) => k.name)}]`}),
         ${environmentId},
+        ${projectId},
         unnest(${Prisma.sql`ARRAY[${batch.map((k) => k.dataType)}]`}::text[]::"ContactAttributeDataType"[]),
         NOW(),
         NOW()
-      ON CONFLICT ("key", "environmentId") 
-      DO UPDATE SET 
+      ON CONFLICT ("key", "environmentId")
+      DO UPDATE SET
         "name" = EXCLUDED."name",
         "updated_at" = NOW()
       RETURNING "id", "key"
@@ -490,6 +493,16 @@ export const upsertBulkContacts = async (
   >
 > => {
   const contactIdxWithConflictingUserIds: number[] = [];
+
+  const environment = await getEnvironment(environmentId);
+  if (!environment) {
+    return err({
+      type: "not_found",
+      details: [{ field: "environment", issue: "not found" }],
+    });
+  }
+  const { projectId } = environment;
+
   const { userIdsInContacts, attributeKeys } = extractContactMetadata(contacts);
 
   const [existingUserIds, existingContactsByEmail, existingAttributeKeys] = await Promise.all([
@@ -624,11 +637,11 @@ export const upsertBulkContacts = async (
 
         // Upsert attribute keys in batches
         if (keysToUpsert.size > 0) {
-          await upsertAttributeKeysInBatches(tx, keysToUpsert, environmentId, attributeKeyMap);
+          await upsertAttributeKeysInBatches(tx, keysToUpsert, environmentId, projectId, attributeKeyMap);
         }
 
         // Create new contacts
-        const newContacts = contactsToCreate.map(() => ({ id: createId(), environmentId }));
+        const newContacts = contactsToCreate.map(() => ({ id: createId(), environmentId, projectId }));
 
         if (newContacts.length > 0) {
           await tx.contact.createMany({ data: newContacts });

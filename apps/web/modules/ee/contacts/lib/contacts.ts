@@ -7,6 +7,7 @@ import { ZId, ZOptionalNumber, ZOptionalString } from "@formbricks/types/common"
 import { TContactAttributeDataType } from "@formbricks/types/contact-attribute-key";
 import { DatabaseError, ValidationError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { formatSnakeCaseToTitleCase, isSafeIdentifier } from "@/lib/utils/safe-identifier";
 import { validateInputs } from "@/lib/utils/validate";
 import { prepareAttributeColumnsForStorage } from "@/modules/ee/contacts/lib/attribute-storage";
@@ -399,7 +400,8 @@ const createMissingAttributeKeys = async (
   lowercaseToActualKeyMap: Map<string, string>,
   attributeKeyMap: Map<string, string>,
   attributeTypeMap: Map<string, TAttributeTypeInfo>,
-  environmentId: string
+  environmentId: string,
+  projectId: string
 ): Promise<void> => {
   const missingKeys = Array.from(csvKeys).filter((key) => !lowercaseToActualKeyMap.has(key.toLowerCase()));
 
@@ -428,6 +430,7 @@ const createMissingAttributeKeys = async (
       name: formatSnakeCaseToTitleCase(key),
       dataType: attributeTypeMap.get(key)?.dataType ?? "string",
       environmentId,
+      projectId,
     })),
     skipDuplicates: true,
   });
@@ -462,6 +465,7 @@ type TCsvProcessingContext = {
   attributeTypeMap: Map<string, TAttributeTypeInfo>;
   duplicateContactsAction: "skip" | "update" | "overwrite";
   environmentId: string;
+  projectId: string;
 };
 
 /**
@@ -479,6 +483,7 @@ const processCsvRecord = async (
     attributeTypeMap,
     duplicateContactsAction,
     environmentId,
+    projectId,
   } = ctx;
   // Map CSV keys to actual DB keys (case-insensitive matching)
   const mappedRecord: Record<string, string> = {};
@@ -501,6 +506,7 @@ const processCsvRecord = async (
     return prisma.contact.create({
       data: {
         environmentId,
+        projectId,
         attributes: {
           create: createAttributeConnections(mappedRecord, environmentId, attributeTypeMap),
         },
@@ -611,10 +617,13 @@ export const createContactsFromCSV = async (
   );
 
   try {
-    // Step 1: Extract metadata from CSV data
+    // Step 1: Resolve projectId from environment
+    const projectId = await getProjectIdFromEnvironmentId(environmentId);
+
+    // Step 2: Extract metadata from CSV data
     const { csvEmails, csvUserIds, csvKeys, attributeValuesByKey } = extractCsvMetadata(csvData);
 
-    // Step 2: Fetch existing data from database
+    // Step 3: Fetch existing data from database
     const [existingContactsByEmail, existingUserIds, existingAttributeKeys] = await Promise.all([
       prisma.contact.findMany({
         where: {
@@ -669,7 +678,8 @@ export const createContactsFromCSV = async (
       lowercaseToActualKeyMap,
       attributeKeyMap,
       attributeTypeMap,
-      environmentId
+      environmentId,
+      projectId
     );
 
     // Step 6: Process each CSV record
@@ -681,6 +691,7 @@ export const createContactsFromCSV = async (
       attributeTypeMap,
       duplicateContactsAction,
       environmentId,
+      projectId,
     };
 
     const CHUNK_SIZE = 50;

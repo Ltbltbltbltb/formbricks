@@ -2,6 +2,7 @@ import { Prisma } from "@prisma/client";
 import { prisma } from "@formbricks/database";
 import { TDisplayCreateInput, ZDisplayCreateInput } from "@formbricks/types/displays";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { getContactByUserId } from "./contact";
 
@@ -15,9 +16,11 @@ export const createDisplay = async (displayInput: TDisplayCreateInput): Promise<
     if (userId) {
       contact = await getContactByUserId(environmentId, userId);
       if (!contact) {
+        const projectId = await getProjectIdFromEnvironmentId(environmentId);
         contact = await prisma.contact.create({
           data: {
             environment: { connect: { id: environmentId } },
+            project: { connect: { id: projectId } },
             attributes: {
               create: {
                 attributeKey: {

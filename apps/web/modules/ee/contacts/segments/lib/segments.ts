@@ -32,6 +32,7 @@ import {
   ZSegmentUpdateInput,
 } from "@formbricks/types/segment";
 import { getSurvey } from "@/lib/survey/service";
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { isResourceFilter, searchForAttributeKeyInSegment } from "@/modules/ee/contacts/segments/lib/utils";
 import { isSameDay, subtractTimeUnit } from "./date-utils";
@@ -139,6 +140,8 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
 
   const surveyConnect = surveyId ? { surveys: { connect: { id: surveyId } } } : {};
 
+  const projectId = await getProjectIdFromEnvironmentId(environmentId);
+
   try {
     // Private segments use upsert because auto-save may have already created a
     // default (empty-filter) segment via connectOrCreate before the user publishes.
@@ -157,11 +160,13 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
           description,
           isPrivate,
           filters,
+          projectId,
           ...surveyConnect,
         },
         update: {
           description,
           filters,
+          projectId,
           ...surveyConnect,
         },
         select: selectSegment,
@@ -177,6 +182,7 @@ export const createSegment = async (segmentCreateInput: TSegmentCreateInput): Pr
         description,
         isPrivate,
         filters,
+        projectId,
         ...surveyConnect,
       },
       select: selectSegment,
@@ -234,6 +240,7 @@ export const cloneSegment = async (segmentId: string, surveyId: string): Promise
         isPrivate: segment.isPrivate,
         environmentId: segment.environmentId,
         filters: segment.filters,
+        projectId: segment.projectId,
         surveys: {
           connect: {
             id: surveyId,
@@ -328,7 +335,8 @@ export const resetSegmentInSurvey = async (surveyId: string): Promise<TSegment> 
             isPrivate: true,
             filters: [],
             surveys: { connect: { id: surveyId } },
-            environment: { connect: { id: survey?.environmentId } },
+            environmentId: survey.environmentId,
+            projectId: survey.projectId,
           },
           select: selectSegment,
         });

@@ -3,6 +3,7 @@ import { prisma } from "@formbricks/database";
 import { PrismaErrorType } from "@formbricks/database/types/error";
 import { TActionClassInput } from "@formbricks/types/action-classes";
 import { DatabaseError } from "@formbricks/types/errors";
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 
 export const createActionClass = async (
   environmentId: string,
@@ -11,10 +12,13 @@ export const createActionClass = async (
   const { environmentId: _, ...actionClassInput } = actionClass;
 
   try {
+    const projectId = await getProjectIdFromEnvironmentId(environmentId);
+
     const actionClassPrisma = await prisma.actionClass.create({
       data: {
         ...actionClassInput,
-        environment: { connect: { id: environmentId } },
+        environmentId,
+        projectId,
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
         noCodeConfig:
           actionClassInput.type === "noCode"

@@ -10,6 +10,7 @@ import {
   UnknownError,
 } from "@formbricks/types/errors";
 import { generateStandardWebhookSignature, generateWebhookSecret } from "@/lib/crypto";
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 import { getTranslate } from "@/lingodotdev/server";
@@ -105,6 +106,8 @@ export const createWebhook = async (
 ): Promise<Webhook> => {
   await validateWebhookUrl(webhookInput.url);
 
+  const projectId = await getProjectIdFromEnvironmentId(environmentId);
+
   try {
     if (isDiscordWebhook(webhookInput.url)) {
       throw new UnknownError("Discord webhooks are currently not supported.");
@@ -117,11 +120,8 @@ export const createWebhook = async (
         ...webhookInput,
         surveyIds: webhookInput.surveyIds || [],
         secret: signingSecret,
-        environment: {
-          connect: {
-            id: environmentId,
-          },
-        },
+        environmentId,
+        projectId,
       },
     });
 

@@ -380,6 +380,7 @@ export const copySurveyToOtherEnvironment = async (
           const baseActionClassData = {
             name: modifiedName,
             environment: { connect: { id: targetEnvironmentId } },
+            project: { connect: { id: targetProject.id } },
             description: trigger.actionClass.description,
             type: trigger.actionClass.type,
           };
@@ -444,6 +445,11 @@ export const copySurveyToOtherEnvironment = async (
           id: targetEnvironmentId,
         },
       },
+      project: {
+        connect: {
+          id: targetProject.id,
+        },
+      },
       creator: {
         connect: {
           id: userId,
@@ -493,6 +499,7 @@ export const copySurveyToOtherEnvironment = async (
             isPrivate: true,
             filters: existingSurvey.segment.filters,
             environment: { connect: { id: targetEnvironmentId } },
+            project: { connect: { id: targetProject.id } },
           },
         };
       } else if (isSameEnvironment) {
@@ -514,6 +521,7 @@ export const copySurveyToOtherEnvironment = async (
             isPrivate: false,
             filters: existingSurvey.segment.filters,
             environment: { connect: { id: targetEnvironmentId } },
+            project: { connect: { id: targetProject.id } },
           },
         };
       }

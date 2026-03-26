@@ -5,12 +5,15 @@ import { DatabaseError, InvalidInputError } from "@formbricks/types/errors";
 import { TWebhookInput, ZWebhookInput } from "@/app/api/v1/webhooks/types/webhooks";
 import { ITEMS_PER_PAGE } from "@/lib/constants";
 import { generateWebhookSecret } from "@/lib/crypto";
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { validateInputs } from "@/lib/utils/validate";
 import { validateWebhookUrl } from "@/lib/utils/validate-webhook-url";
 
 export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhook> => {
   validateInputs([webhookInput, ZWebhookInput]);
   await validateWebhookUrl(webhookInput.url);
+
+  const projectId = await getProjectIdFromEnvironmentId(webhookInput.environmentId);
 
   try {
     const secret = generateWebhookSecret();
@@ -23,11 +26,8 @@ export const createWebhook = async (webhookInput: TWebhookInput): Promise<Webhoo
         surveyIds: webhookInput.surveyIds || [],
         triggers: webhookInput.triggers || [],
         secret,
-        environment: {
-          connect: {
-            id: webhookInput.environmentId,
-          },
-        },
+        environmentId: webhookInput.environmentId,
+        projectId,
       },
     });
 

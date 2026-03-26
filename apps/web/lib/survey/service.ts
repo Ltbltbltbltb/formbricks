@@ -14,6 +14,7 @@ import {
 import { TriggerUpdate } from "@/modules/survey/editor/types/survey-trigger";
 import { getActionClasses } from "../actionClass/service";
 import { ITEMS_PER_PAGE } from "../constants";
+import { getProjectIdFromEnvironmentId } from "../utils/helper";
 import { validateInputs } from "../utils/validate";
 import {
   checkForInvalidImagesInQuestions,
@@ -473,6 +474,11 @@ export const updateSurveyInternal = async (
                       id: environmentId,
                     },
                   },
+                  project: {
+                    connect: {
+                      id: currentSurvey.projectId!,
+                    },
+                  },
                 },
               },
             },
@@ -626,7 +632,10 @@ export const createSurvey = async (
       };
     }
 
-    const organization = await getOrganizationByEnvironmentId(parsedEnvironmentId);
+    const [organization, projectId] = await Promise.all([
+      getOrganizationByEnvironmentId(parsedEnvironmentId),
+      getProjectIdFromEnvironmentId(parsedEnvironmentId),
+    ]);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
     }
@@ -661,6 +670,11 @@ export const createSurvey = async (
             id: parsedEnvironmentId,
           },
         },
+        project: {
+          connect: {
+            id: projectId,
+          },
+        },
       },
       select: selectSurvey,
     });
@@ -672,11 +686,8 @@ export const createSurvey = async (
           title: survey.id,
           filters: [],
           isPrivate: true,
-          environment: {
-            connect: {
-              id: parsedEnvironmentId,
-            },
-          },
+          environmentId: parsedEnvironmentId,
+          projectId,
         },
       });
 

@@ -1,5 +1,6 @@
 import { prisma } from "@formbricks/database";
 import { Result, err, ok } from "@formbricks/types/error-handlers";
+import { getEnvironment } from "@/lib/environment/service";
 import { ApiErrorResponseV2 } from "@/modules/api/v2/types/api-error";
 import { readAttributeValue } from "@/modules/ee/contacts/lib/attribute-storage";
 import { TContactCreateRequest, TContactResponse } from "@/modules/ee/contacts/types/contact";
@@ -15,6 +16,14 @@ export const createContact = async (
       return err({
         type: "bad_request",
         details: [{ field: "attributes", issue: "email attribute is required" }],
+      });
+    }
+
+    const environment = await getEnvironment(environmentId);
+    if (!environment) {
+      return err({
+        type: "not_found",
+        details: [{ field: "environment", issue: "not found" }],
       });
     }
 
@@ -98,6 +107,7 @@ export const createContact = async (
     const result = await prisma.contact.create({
       data: {
         environmentId,
+        projectId: environment.projectId,
         attributes: {
           createMany: {
             data: attributeData,

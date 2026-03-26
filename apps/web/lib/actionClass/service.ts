@@ -9,6 +9,7 @@ import { TActionClass, TActionClassInput, ZActionClassInput } from "@formbricks/
 import { ZId, ZOptionalNumber, ZString } from "@formbricks/types/common";
 import { DatabaseError, ResourceNotFoundError } from "@formbricks/types/errors";
 import { ITEMS_PER_PAGE } from "../constants";
+import { getProjectIdFromEnvironmentId } from "../utils/helper";
 import { validateInputs } from "../utils/validate";
 
 const selectActionClass = {
@@ -114,10 +115,13 @@ export const createActionClass = async (
   const { environmentId: _, ...actionClassInput } = actionClass;
 
   try {
+    const projectId = await getProjectIdFromEnvironmentId(environmentId);
+
     const actionClassPrisma = await prisma.actionClass.create({
       data: {
         ...actionClassInput,
-        environment: { connect: { id: environmentId } },
+        environmentId,
+        projectId,
         key: actionClassInput.type === "code" ? actionClassInput.key : undefined,
         noCodeConfig:
           actionClassInput.type === "noCode"

@@ -6,6 +6,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { DEFAULT_LOCALE, SURVEYS_PER_PAGE } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
 import { getUserLocale } from "@/lib/user/service";
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getTranslate } from "@/lingodotdev/server";
 import { getEnvironmentAuth } from "@/modules/environments/lib/utils";
 import { getProjectWithTeamIdsByEnvironmentId } from "@/modules/survey/lib/project";
@@ -43,7 +44,8 @@ export const SurveysPage = async ({ params: paramsProps }: SurveyTemplateProps) 
     return redirect(`/environments/${params.environmentId}/settings/billing`);
   }
 
-  const surveyCount = await getSurveyCount(params.environmentId);
+  const projectId = await getProjectIdFromEnvironmentId(params.environmentId);
+  const surveyCount = await getSurveyCount(projectId);
 
   const currentProjectChannel = project.config.channel ?? null;
   const locale = (await getUserLocale(session.user.id)) ?? DEFAULT_LOCALE;

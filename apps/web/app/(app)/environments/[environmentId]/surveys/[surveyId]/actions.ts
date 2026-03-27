@@ -6,7 +6,7 @@ import { ResourceNotFoundError } from "@formbricks/types/errors";
 import { ZResponseFilterCriteria } from "@formbricks/types/responses";
 import { getResponseDownloadFile, getResponseFilteringValues } from "@/lib/response/service";
 import { getSurvey } from "@/lib/survey/service";
-import { getTagsByEnvironmentId } from "@/lib/tag/service";
+import { getTagsByProjectId } from "@/lib/tag/service";
 import { authenticatedActionClient } from "@/lib/utils/action-client";
 import { checkAuthorizationUpdated } from "@/lib/utils/action-client/action-client-middleware";
 import { getOrganizationIdFromSurveyId, getProjectIdFromSurveyId } from "@/lib/utils/helper";
@@ -84,8 +84,10 @@ export const getSurveyFilterDataAction = authenticatedActionClient
 
     const isQuotasAllowed = await getIsQuotasEnabled(organizationId);
 
+    const projectId = survey.projectId!;
+
     const [tags, { contactAttributes: attributes, meta, hiddenFields }, quotas = []] = await Promise.all([
-      getTagsByEnvironmentId(survey.environmentId),
+      getTagsByProjectId(projectId),
       getResponseFilteringValues(parsedInput.surveyId),
       isQuotasAllowed ? getQuotas(parsedInput.surveyId) : [],
     ]);

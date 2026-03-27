@@ -1,4 +1,5 @@
 import { ITEMS_PER_PAGE } from "@/lib/constants";
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getTranslate } from "@/lingodotdev/server";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
 import { UploadContactsCSVButton } from "@/modules/ee/contacts/components/upload-contacts-button";
@@ -19,12 +20,14 @@ export const ContactsPage = async ({
 
   const t = await getTranslate();
 
+  const projectId = await getProjectIdFromEnvironmentId(params.environmentId);
+
   const isContactsEnabled = await getIsContactsEnabled(organization.id);
 
   const isQuotasAllowed = await getIsQuotasEnabled(organization.id);
 
-  const contactAttributeKeys = await getContactAttributeKeys(params.environmentId);
-  const initialContacts = await getContacts(params.environmentId, 0);
+  const contactAttributeKeys = await getContactAttributeKeys(projectId);
+  const initialContacts = await getContacts(projectId, 0);
 
   const AddContactsButton = (
     <UploadContactsCSVButton environmentId={environment.id} contactAttributeKeys={contactAttributeKeys} />

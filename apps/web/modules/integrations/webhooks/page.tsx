@@ -16,9 +16,11 @@ export const WebhooksPage = async (props: { params: Promise<{ environmentId: str
 
   const { isReadOnly, environment } = await getEnvironmentAuth(params.environmentId);
 
+  const projectId = environment.projectId;
+
   const [webhooks, surveys] = await Promise.all([
-    getWebhooks(params.environmentId),
-    getSurveys(params.environmentId, 200), // HOTFIX: not getting all surveys for now since it's maxing out the prisma accelerate limit
+    getWebhooks(projectId),
+    getSurveys(projectId, 200), // HOTFIX: not getting all surveys for now since it's maxing out the prisma accelerate limit
   ]);
 
   const renderAddWebhookButton = () => <AddWebhookButton environment={environment} surveys={surveys} />;

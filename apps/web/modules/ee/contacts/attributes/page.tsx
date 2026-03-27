@@ -1,3 +1,4 @@
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getLocale } from "@/lingodotdev/language";
 import { getTranslate } from "@/lingodotdev/server";
 import { ContactsPageLayout } from "@/modules/ee/contacts/components/contacts-page-layout";
@@ -15,9 +16,10 @@ export const AttributesPage = async ({
   const params = await paramsProps;
   const locale = await getLocale();
   const t = await getTranslate();
+  const projectId = await getProjectIdFromEnvironmentId(params.environmentId);
   const [{ isReadOnly, organization }, contactAttributeKeys] = await Promise.all([
     getEnvironmentAuth(params.environmentId),
-    getContactAttributeKeys(params.environmentId),
+    getContactAttributeKeys(projectId),
   ]);
 
   const isContactsEnabled = await getIsContactsEnabled(organization.id);

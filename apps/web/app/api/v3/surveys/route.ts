@@ -44,16 +44,16 @@ export const GET = withV3ApiWrapper({
         return authResult;
       }
 
-      const { environmentId } = authResult;
+      const { projectId } = authResult;
 
       const [{ surveys, nextCursor }, totalCount] = await Promise.all([
-        getSurveyListPage(environmentId, {
+        getSurveyListPage(projectId, {
           limit: parsed.limit,
           cursor: parsed.cursor,
           sortBy: parsed.sortBy,
           filterCriteria: parsed.filterCriteria,
         }),
-        getSurveyCount(environmentId, parsed.filterCriteria),
+        getSurveyCount(projectId, parsed.filterCriteria),
       ]);
 
       return successListResponse(

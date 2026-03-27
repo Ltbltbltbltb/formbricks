@@ -8,6 +8,7 @@ import {
   UNSPLASH_ACCESS_KEY,
 } from "@/lib/constants";
 import { getPublicDomain } from "@/lib/getPublicUrl";
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 import { getTranslate } from "@/lingodotdev/server";
 import { getContactAttributeKeys } from "@/modules/ee/contacts/lib/contact-attribute-keys";
 import { getSegments } from "@/modules/ee/contacts/segments/lib/segments";
@@ -50,14 +51,16 @@ export const SurveyEditorPage = async (props: {
     await getEnvironmentAuth(params.environmentId);
 
   const t = await getTranslate();
+  const projectId = await getProjectIdFromEnvironmentId(params.environmentId);
+
   const [survey, projectWithTeamIds, actionClasses, contactAttributeKeys, responseCount, segments] =
     await Promise.all([
       getSurvey(params.surveyId),
       getProjectWithTeamIdsByEnvironmentId(params.environmentId),
-      getActionClasses(params.environmentId),
-      getContactAttributeKeys(params.environmentId),
+      getActionClasses(projectId),
+      getContactAttributeKeys(projectId),
       getResponseCountBySurveyId(params.surveyId),
-      getSegments(params.environmentId),
+      getSegments(projectId),
     ]);
 
   if (!projectWithTeamIds) {

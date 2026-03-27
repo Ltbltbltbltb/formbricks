@@ -11,25 +11,23 @@ import { TagError } from "@/modules/projects/settings/types/tag";
 import { ITEMS_PER_PAGE } from "../constants";
 import { validateInputs } from "../utils/validate";
 
-export const getTagsByEnvironmentId = reactCache(
-  async (environmentId: string, page?: number): Promise<TTag[]> => {
-    validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+export const getTagsByProjectId = reactCache(async (projectId: string, page?: number): Promise<TTag[]> => {
+  validateInputs([projectId, ZId], [page, ZOptionalNumber]);
 
-    try {
-      const tags = await prisma.tag.findMany({
-        where: {
-          environmentId,
-        },
-        take: page ? ITEMS_PER_PAGE : undefined,
-        skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
-      });
+  try {
+    const tags = await prisma.tag.findMany({
+      where: {
+        projectId,
+      },
+      take: page ? ITEMS_PER_PAGE : undefined,
+      skip: page ? ITEMS_PER_PAGE * (page - 1) : undefined,
+    });
 
-      return tags;
-    } catch (error) {
-      throw error;
-    }
+    return tags;
+  } catch (error) {
+    throw error;
   }
-);
+});
 
 export const getTag = reactCache(async (id: string): Promise<TTag | null> => {
   validateInputs([id, ZId]);

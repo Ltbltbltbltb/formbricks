@@ -25,7 +25,12 @@ export const createSurvey = async (
       delete restSurveyBody.languages;
     }
 
-    const actionClasses = await getActionClasses(environmentId);
+    const [organization, projectId] = await Promise.all([
+      getOrganizationByEnvironmentId(environmentId),
+      getProjectIdFromEnvironmentId(environmentId),
+    ]);
+
+    const actionClasses = await getActionClasses(projectId);
 
     // @ts-expect-error
     let data: Omit<Prisma.SurveyCreateInput, "environment"> = {
@@ -44,11 +49,6 @@ export const createSurvey = async (
         },
       };
     }
-
-    const [organization, projectId] = await Promise.all([
-      getOrganizationByEnvironmentId(environmentId),
-      getProjectIdFromEnvironmentId(environmentId),
-    ]);
     if (!organization) {
       throw new ResourceNotFoundError("Organization", null);
     }

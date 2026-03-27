@@ -246,13 +246,13 @@ export const getSurveysByActionClassId = reactCache(
 );
 
 export const getSurveys = reactCache(
-  async (environmentId: string, limit?: number, offset?: number): Promise<TSurvey[]> => {
-    validateInputs([environmentId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
+  async (projectId: string, limit?: number, offset?: number): Promise<TSurvey[]> => {
+    validateInputs([projectId, ZId], [limit, ZOptionalNumber], [offset, ZOptionalNumber]);
 
     try {
       const surveysPrisma = await prisma.survey.findMany({
         where: {
-          environmentId,
+          projectId,
         },
         select: selectSurvey,
         orderBy: {
@@ -273,12 +273,12 @@ export const getSurveys = reactCache(
   }
 );
 
-export const getSurveyCount = reactCache(async (environmentId: string): Promise<number> => {
-  validateInputs([environmentId, ZId]);
+export const getSurveyCount = reactCache(async (projectId: string): Promise<number> => {
+  validateInputs([projectId, ZId]);
   try {
     const surveyCount = await prisma.survey.count({
       where: {
-        environmentId: environmentId,
+        projectId,
       },
     });
 

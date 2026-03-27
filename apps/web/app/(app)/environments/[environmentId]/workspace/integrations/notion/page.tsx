@@ -31,9 +31,11 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
 
   const { isReadOnly, environment, session } = await getEnvironmentAuth(params.environmentId);
 
+  const projectId = environment.projectId;
+
   const [surveys, notionIntegration, locale] = await Promise.all([
-    getSurveys(params.environmentId),
-    getIntegrationByType(params.environmentId, "notion"),
+    getSurveys(projectId),
+    getIntegrationByType(projectId, "notion"),
     getUserLocale(session.user.id),
   ]);
 

@@ -19,9 +19,11 @@ const Page = async (props: { params: Promise<{ environmentId: string }> }) => {
 
   const { isReadOnly, environment, session } = await getEnvironmentAuth(params.environmentId);
 
+  const projectId = environment.projectId;
+
   const [surveys, slackIntegration, locale] = await Promise.all([
-    getSurveys(params.environmentId),
-    getIntegrationByType(params.environmentId, "slack"),
+    getSurveys(projectId),
+    getIntegrationByType(projectId, "slack"),
     getUserLocale(session.user.id),
   ]);
 

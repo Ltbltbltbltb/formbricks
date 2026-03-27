@@ -19,6 +19,8 @@ const ZValidateGoogleSheetsConnectionAction = z.object({
 export const validateGoogleSheetsConnectionAction = authenticatedActionClient
   .inputSchema(ZValidateGoogleSheetsConnectionAction)
   .action(async ({ ctx, parsedInput }) => {
+    const projectId = await getProjectIdFromEnvironmentId(parsedInput.environmentId);
+
     await checkAuthorizationUpdated({
       userId: ctx.user.id,
       organizationId: await getOrganizationIdFromEnvironmentId(parsedInput.environmentId),
@@ -29,13 +31,13 @@ export const validateGoogleSheetsConnectionAction = authenticatedActionClient
         },
         {
           type: "projectTeam",
-          projectId: await getProjectIdFromEnvironmentId(parsedInput.environmentId),
+          projectId,
           minPermission: "readWrite",
         },
       ],
     });
 
-    const integration = await getIntegrationByType(parsedInput.environmentId, "googleSheets");
+    const integration = await getIntegrationByType(projectId, "googleSheets");
     if (!integration) {
       return { data: false };
     }

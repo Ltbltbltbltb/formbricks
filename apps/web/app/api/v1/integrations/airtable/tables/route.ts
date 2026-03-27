@@ -5,6 +5,7 @@ import { withV1ApiWrapper } from "@/app/lib/api/with-api-logging";
 import { getTables } from "@/lib/airtable/service";
 import { hasUserEnvironmentAccess } from "@/lib/environment/auth";
 import { getIntegrationByType } from "@/lib/integration/service";
+import { getProjectIdFromEnvironmentId } from "@/lib/utils/helper";
 
 export const GET = withV1ApiWrapper({
   handler: async ({ req, authentication }) => {
@@ -36,7 +37,8 @@ export const GET = withV1ApiWrapper({
       };
     }
 
-    const integration = (await getIntegrationByType(environmentId, "airtable")) as TIntegrationAirtable;
+    const projectId = await getProjectIdFromEnvironmentId(environmentId);
+    const integration = (await getIntegrationByType(projectId, "airtable")) as TIntegrationAirtable;
 
     if (!integration) {
       return {

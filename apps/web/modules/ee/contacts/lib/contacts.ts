@@ -116,8 +116,8 @@ const selectContact = {
   },
 } satisfies Prisma.ContactSelect;
 
-export const buildContactWhereClause = (environmentId: string, search?: string): Prisma.ContactWhereInput => {
-  const whereClause: Prisma.ContactWhereInput = { environmentId };
+export const buildContactWhereClause = (projectId: string, search?: string): Prisma.ContactWhereInput => {
+  const whereClause: Prisma.ContactWhereInput = { projectId };
 
   if (search) {
     whereClause.OR = [
@@ -144,12 +144,12 @@ export const buildContactWhereClause = (environmentId: string, search?: string):
 };
 
 export const getContacts = reactCache(
-  async (environmentId: string, offset?: number, searchValue?: string): Promise<TContactWithAttributes[]> => {
-    validateInputs([environmentId, ZId], [offset, ZOptionalNumber], [searchValue, ZOptionalString]);
+  async (projectId: string, offset?: number, searchValue?: string): Promise<TContactWithAttributes[]> => {
+    validateInputs([projectId, ZId], [offset, ZOptionalNumber], [searchValue, ZOptionalString]);
 
     try {
       const contacts = await prisma.contact.findMany({
-        where: buildContactWhereClause(environmentId, searchValue),
+        where: buildContactWhereClause(projectId, searchValue),
         select: selectContact,
         take: ITEMS_PER_PAGE,
         skip: offset,
@@ -627,7 +627,7 @@ export const createContactsFromCSV = async (
     const [existingContactsByEmail, existingUserIds, existingAttributeKeys] = await Promise.all([
       prisma.contact.findMany({
         where: {
-          environmentId,
+          projectId,
           attributes: { some: { attributeKey: { key: "email" }, value: { in: csvEmails } } },
         },
         select: {
@@ -636,11 +636,11 @@ export const createContactsFromCSV = async (
         },
       }),
       prisma.contactAttribute.findMany({
-        where: { attributeKey: { key: "userId", environmentId }, value: { in: csvUserIds } },
+        where: { attributeKey: { key: "userId", projectId }, value: { in: csvUserIds } },
         select: { value: true, contactId: true },
       }),
       prisma.contactAttributeKey.findMany({
-        where: { environmentId },
+        where: { projectId },
         select: { key: true, id: true, dataType: true },
       }),
     ]);

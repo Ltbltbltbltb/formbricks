@@ -139,13 +139,13 @@ export const createWebhook = async (
   }
 };
 
-export const getWebhooks = async (environmentId: string): Promise<Webhook[]> => {
-  validateInputs([environmentId, ZId]);
+export const getWebhooks = async (projectId: string): Promise<Webhook[]> => {
+  validateInputs([projectId, ZId]);
 
   try {
     const webhooks = await prisma.webhook.findMany({
       where: {
-        environmentId: environmentId,
+        projectId,
       },
       orderBy: {
         createdAt: "desc",

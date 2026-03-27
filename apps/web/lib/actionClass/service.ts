@@ -26,13 +26,13 @@ const selectActionClass = {
 } satisfies Prisma.ActionClassSelect;
 
 export const getActionClasses = reactCache(
-  async (environmentId: string, page?: number): Promise<TActionClass[]> => {
-    validateInputs([environmentId, ZId], [page, ZOptionalNumber]);
+  async (projectId: string, page?: number): Promise<TActionClass[]> => {
+    validateInputs([projectId, ZId], [page, ZOptionalNumber]);
 
     try {
       return await prisma.actionClass.findMany({
         where: {
-          environmentId: environmentId,
+          projectId,
         },
         select: selectActionClass,
         take: page ? ITEMS_PER_PAGE : undefined,
@@ -42,21 +42,21 @@ export const getActionClasses = reactCache(
         },
       });
     } catch (error) {
-      throw new DatabaseError(`Database error when fetching actions for environment ${environmentId}`);
+      throw new DatabaseError(`Database error when fetching actions for project ${projectId}`);
     }
   }
 );
 
-// This function is used to get an action by its name and environmentId(it can return private actions as well)
-export const getActionClassByEnvironmentIdAndName = reactCache(
-  async (environmentId: string, name: string): Promise<TActionClass | null> => {
-    validateInputs([environmentId, ZId], [name, ZString]);
+// This function is used to get an action by its name and projectId(it can return private actions as well)
+export const getActionClassByProjectIdAndName = reactCache(
+  async (projectId: string, name: string): Promise<TActionClass | null> => {
+    validateInputs([projectId, ZId], [name, ZString]);
 
     try {
       const actionClass = await prisma.actionClass.findFirst({
         where: {
           name,
-          environmentId,
+          projectId,
         },
         select: selectActionClass,
       });
